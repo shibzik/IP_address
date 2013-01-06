@@ -1,0 +1,165 @@
+
+     
+    
+    var addrImput=[];
+    var addrOutput=[];
+    var maskOutput=[];
+    var imput="";
+    var netAddr=[0,0,0,0];
+    
+
+//-----imput in string and convert --------
+function take() {
+     var num1str="";
+     var num2str="";
+     var num3str="";
+     var num4str="";
+     var maskstr="";
+    imput=prompt("Insert IP adress, ex:192.168.3.0/24");
+    if(imput.length>19){
+        alert("Too long imput");}
+        else
+{     var point=1;
+     for(var i=0;i<imput.length;i++){
+         
+         if(imput[i]===".") point++;
+         if(imput[i-1]==="/") point=77;
+         if(imput[i]!="." && imput[i]!="/") {
+             switch (point){
+                 case 1:num1str+=imput[i];break;
+                 case 2:num2str+=imput[i];break;
+                 case 3:num3str+=imput[i];break;
+                 case 4:num4str+=imput[i];break;
+                 case 77: maskstr+=imput[i];break;
+                 
+             }   
+         }
+         }
+     addrImput[0]=Number(num1str);
+     addrImput[1]=Number(num2str);
+     addrImput[2]=Number(num3str);
+     addrImput[3]=Number(num4str);
+     addrImput[4]=Number(maskstr);
+         
+}  
+
+if (check()===false) {
+console.log("wrong address");
+take();
+}
+
+}
+//--- check correct imput
+function check() {
+    var control=true;
+    for(var i=0;i<4;i++){
+        if(addrImput[i]>255 || addrImput[i]<0 || isNaN(addrImput[i])) control=false;// check value of each byte
+    }
+    if(addrImput[4]>32 || addrImput[4]<0 || isNaN(addrImput[4])) control=false;// check value of mask
+    
+    return control;
+}
+
+function completeAddress(){
+    addrOutput=addrImput.slice(0,4);
+    var mask=addrImput[4];
+    var val=32-mask;
+    var poz=(mask-mask%8)/8;
+    for(var i=4;i<4+poz;i++){
+        addrOutput[i]=255;
+    }
+    if(4+poz<8)
+     {
+      if(val%8!==0)
+       addrOutput[4+poz]=256-Math.pow(2,val%8);
+      else addrOutput[4+poz]=0;
+      
+     }
+    //--- complite mask part with 0.
+   for(i=4;i<8;i++){
+       if (addrOutput[i]===undefined) addrOutput[i]=0;
+   }
+   console.log(Math.pow(2,val%8));
+   console.log("poz="+poz);
+   maskOutput=addrOutput.slice(4,8);
+   
+    return addrOutput;
+}
+//----------------------------------
+var netSize= function(){
+    var networkSize;// number of addresses in range
+    networkSize=(256-addrOutput[7])*(256-addrOutput[6])*(256-addrOutput[5])*(256-addrOutput[4]);
+   
+    return networkSize;
+};
+
+var netAddress=function(){
+  
+  for(var i=0;i<4;i++){
+      if (maskOutput[i]===255){
+          netAddr[i]=addrOutput[i];
+      }else {
+          var n=256-maskOutput[i]; // find valid address
+          var local=0;
+          while (local+n<addrOutput[i]){
+              local+=n;
+          }
+          netAddr[i]=local;
+          }
+      }
+     return netAddr;
+  };
+  
+var broadAddress = function(){
+    var broadcast=netAddress();
+    for(var i=0;i<netSize()-1;i++){
+        broadcast[3]++;
+        if (broadcast[3]===256){
+            broadcast[3]=0;
+            broadcast[2]++;
+            if(broadcast[2]===256){
+                broadcast[2]=0;
+                broadcast[1]++;
+                if (broadcast[1]===256){
+                    broadcast[1]=0;
+                    broadcast[0]++;
+                }
+                
+            }
+            
+        }
+        
+    }
+    return broadcast;
+
+};
+
+var firsValidHost= function(){
+    var first=netAddress();
+    first[3]++;
+    return first;
+};
+
+var lastValidHost= function(){
+    var last=broadAddress();
+    last[3]--;
+    return last;
+};
+
+function output(){
+   
+    console.log("Imput addres: "+addrImput[0]+"."+addrImput[1]+"."+addrImput[2]+"."+addrImput[3]+"/"+addrImput[4]);
+    console.log("Full addres: "+addrOutput[0]+"."+addrOutput[1]+"."+addrOutput[2]+"."+addrOutput[3]+" "+addrOutput[4]+"."+addrOutput[5]+"."+addrOutput[6]+"."+addrOutput[7]);
+    console.log("Network addres: "+netAddress()[0]+"."+netAddress()[1]+"."+netAddress()[2]+"."+netAddress()[3]);
+    console.log("Broadcast addres: "+broadAddress()[0]+"."+broadAddress()[1]+"."+broadAddress()[2]+"."+broadAddress()[3]);
+    
+    console.log("First valid host addres: "+firsValidHost()[0]+"."+firsValidHost()[1]+"."+firsValidHost()[2]+"."+firsValidHost()[3]);
+    console.log("First valid host addres: "+lastValidHost()[0]+"."+lastValidHost()[1]+"."+lastValidHost()[2]+"."+lastValidHost()[3]);
+}
+take();
+completeAddress();
+
+netSize();
+netAddress();
+broadAddress();
+output();
